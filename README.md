@@ -1,6 +1,6 @@
 # Edukasi Berhenti Merokok
 
-Platform edukasi terpadu untuk mendukung perjalanan berhenti merokok — dikembangkan oleh **Universitas Paramadina**.
+Platform edukasi terpadu untuk mendukung perjalanan berhenti merokok — dikembangkan oleh **Yoga Pratama**.
 
 ---
 
