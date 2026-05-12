@@ -15,13 +15,14 @@
         };
     @endphp
 
-    <div class="mx-auto max-w-3xl">
+    <div class="max-w-5xl">
         <a href="{{ route('payments.index') }}" class="mb-8 inline-flex items-center gap-2 text-xs text-[#6C6863] transition-colors duration-500 hover:text-[#D4AF37]">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
             <span class="editorial-label">Kembali ke Pembayaran</span>
         </a>
 
-        <div class="card">
+        <div class="grid gap-px bg-[#1A1A1A]/10 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <div class="bg-[#F9F8F6] p-6 md:p-8">
             <div class="flex flex-col gap-5 border-b border-[#1A1A1A]/10 pb-6 md:flex-row md:items-start md:justify-between">
                 <div>
                     <span class="editorial-label">Invoice</span>
@@ -54,13 +55,6 @@
                 </div>
             </div>
 
-            <div class="border-y border-[#1A1A1A]/10 py-6">
-                <div class="flex items-center justify-between gap-4">
-                    <span class="editorial-label">Total Pembayaran</span>
-                    <p class="font-serif text-3xl text-[#D4AF37]">Rp{{ number_format($payment->amount, 0, ',', '.') }}</p>
-                </div>
-            </div>
-
             @if($payment->status !== 'success')
                 <div class="mt-6 space-y-5">
                     <div class="bg-[#EBE5DE] p-5">
@@ -71,7 +65,7 @@
                     </div>
                     <form action="{{ route('payments.pay', $payment) }}" method="POST">
                         @csrf
-                        <button type="submit" class="btn-primary w-full"><span>Bayar Sekarang</span></button>
+                        <button type="submit" class="btn-primary"><span>Bayar Sekarang</span></button>
                     </form>
                 </div>
             @else
@@ -86,6 +80,26 @@
                     </div>
                 @endif
             @endif
+            </div>
+
+            <aside class="bg-[#EBE5DE] p-6 md:p-8">
+                <span class="editorial-label">Total Pembayaran</span>
+                <p class="mt-3 font-serif text-4xl text-[#D4AF37]">Rp{{ number_format($payment->amount, 0, ',', '.') }}</p>
+                <div class="mt-6 space-y-4 border-t border-[#1A1A1A]/10 pt-6">
+                    <div>
+                        <span class="editorial-label">Status</span>
+                        <p class="mt-1 text-sm text-[#1A1A1A]">{{ $payment->status === 'success' ? 'Lunas' : 'Menunggu pembayaran' }}</p>
+                    </div>
+                    <div>
+                        <span class="editorial-label">Metode</span>
+                        <p class="mt-1 text-sm text-[#1A1A1A]">{{ $methodLabel }}</p>
+                    </div>
+                    <div>
+                        <span class="editorial-label">Referensi</span>
+                        <p class="mt-1 break-all text-sm text-[#1A1A1A]">{{ $payment->reference_id }}</p>
+                    </div>
+                </div>
+            </aside>
         </div>
     </div>
 @endsection

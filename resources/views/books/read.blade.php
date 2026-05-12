@@ -3,7 +3,7 @@
 @section('title', 'Baca ' . $book->title)
 
 @section('content')
-    <div class="mx-auto max-w-4xl">
+    <div class="max-w-5xl">
         <a href="{{ route('books.purchased') }}" class="mb-8 inline-flex items-center gap-2 text-xs text-[#6C6863] transition-colors duration-500 hover:text-[#D4AF37]">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
             <span class="editorial-label">Kembali ke Buku Saya</span>

@@ -38,9 +38,7 @@
                     ['label' => 'Progress', 'url' => route('user.progress'), 'active' => request()->routeIs('user.progress')],
                     ['label' => 'Edukasi', 'url' => route('contents.index'), 'active' => request()->routeIs('contents.*')],
                     ['label' => 'Buku', 'url' => route('books.index'), 'active' => request()->routeIs('books.index') || request()->routeIs('books.show')],
-                    ['label' => 'Buku Saya', 'url' => route('books.purchased'), 'active' => request()->routeIs('books.purchased') || request()->routeIs('books.read')],
                     ['label' => 'Konsultasi', 'url' => route('consultations.index'), 'active' => request()->routeIs('consultations.*')],
-                    ['label' => 'Pembayaran', 'url' => route('payments.index'), 'active' => request()->routeIs('payments.*')],
                     ['label' => 'Forum', 'url' => route('forums.index'), 'active' => request()->routeIs('forums.*')],
                 ],
             };
@@ -98,6 +96,8 @@
                                 <a href="{{ route('home') }}" class="block px-4 py-3 text-xs font-medium uppercase tracking-[0.2em] text-[#1A1A1A] transition-colors duration-500 hover:text-[#D4AF37]">Beranda</a>
                                 @if(auth()->user()->role === 'user')
                                     <a href="{{ route('user.progress') }}" class="block px-4 py-3 text-xs font-medium uppercase tracking-[0.2em] text-[#1A1A1A] transition-colors duration-500 hover:text-[#D4AF37]">Progress</a>
+                                    <a href="{{ route('books.purchased') }}" class="block px-4 py-3 text-xs font-medium uppercase tracking-[0.2em] text-[#1A1A1A] transition-colors duration-500 hover:text-[#D4AF37]">Buku Saya</a>
+                                    <a href="{{ route('payments.index') }}" class="block px-4 py-3 text-xs font-medium uppercase tracking-[0.2em] text-[#1A1A1A] transition-colors duration-500 hover:text-[#D4AF37]">Pembayaran</a>
                                 @endif
                                 @if(auth()->user()->role !== 'admin')
                                     <a href="{{ route('profile.edit') }}" class="block px-4 py-3 text-xs font-medium uppercase tracking-[0.2em] text-[#1A1A1A] transition-colors duration-500 hover:text-[#D4AF37]">Profil Saya</a>
@@ -125,6 +125,10 @@
                         <a href="{{ route('home') }}" class="border border-[#1A1A1A]/10 px-4 py-3 text-xs font-medium uppercase tracking-[0.18em] text-[#1A1A1A]">Beranda</a>
                         @if(auth()->user()->role !== 'admin')
                             <a href="{{ route('profile.edit') }}" class="border border-[#1A1A1A]/10 px-4 py-3 text-xs font-medium uppercase tracking-[0.18em] text-[#1A1A1A]">Profil Saya</a>
+                        @endif
+                        @if(auth()->user()->role === 'user')
+                            <a href="{{ route('books.purchased') }}" class="border border-[#1A1A1A]/10 px-4 py-3 text-xs font-medium uppercase tracking-[0.18em] text-[#1A1A1A]">Buku Saya</a>
+                            <a href="{{ route('payments.index') }}" class="border border-[#1A1A1A]/10 px-4 py-3 text-xs font-medium uppercase tracking-[0.18em] text-[#1A1A1A]">Pembayaran</a>
                         @endif
                         <form action="{{ route('logout') }}" method="POST">
                             @csrf
