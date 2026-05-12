@@ -9,7 +9,7 @@ class ForumReply extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['forum_id', 'user_id', 'body'];
+    protected $fillable = ['forum_id', 'user_id', 'body', 'content', 'likes_count'];
 
     public function user()
     {

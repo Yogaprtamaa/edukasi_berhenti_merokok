@@ -37,8 +37,10 @@
                 default => [
                     ['label' => 'Progress', 'url' => route('user.progress'), 'active' => request()->routeIs('user.progress')],
                     ['label' => 'Edukasi', 'url' => route('contents.index'), 'active' => request()->routeIs('contents.*')],
-                    ['label' => 'Buku', 'url' => route('books.index'), 'active' => request()->routeIs('books.*')],
+                    ['label' => 'Buku', 'url' => route('books.index'), 'active' => request()->routeIs('books.index') || request()->routeIs('books.show')],
+                    ['label' => 'Buku Saya', 'url' => route('books.purchased'), 'active' => request()->routeIs('books.purchased') || request()->routeIs('books.read')],
                     ['label' => 'Konsultasi', 'url' => route('consultations.index'), 'active' => request()->routeIs('consultations.*')],
+                    ['label' => 'Pembayaran', 'url' => route('payments.index'), 'active' => request()->routeIs('payments.*')],
                     ['label' => 'Forum', 'url' => route('forums.index'), 'active' => request()->routeIs('forums.*')],
                 ],
             };

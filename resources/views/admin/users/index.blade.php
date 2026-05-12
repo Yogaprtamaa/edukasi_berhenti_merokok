@@ -30,7 +30,7 @@
                 <div class="flex items-center gap-2">
                     <a href="{{ route('admin.users.edit', $user) }}" class="badge-yellow cursor-pointer">Edit</a>
                     @if($user->id !== auth()->id())
-                        <form action="{{ route('admin.users.destroy', $user) }}" method="POST" onsubmit="return confirm('Hapus pengguna {{ $user->name }}?')">
+                        <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="flex" onsubmit="return confirm('Hapus pengguna {{ $user->name }}?')">
                             @csrf
                             @method('DELETE')
                             <button class="badge-red cursor-pointer">Hapus</button>

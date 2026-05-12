@@ -29,13 +29,17 @@ class CheckInController extends Controller
             return redirect()->route('dashboard')->with('error', 'Sudah check-in hari ini.');
         }
 
+        $isSmokeFree = $request->boolean('is_smoke_free');
+
         DailyCheckIn::create([
-            'user_id'       => $user->id,
-            'check_in_date' => today(),
-            'is_smoke_free' => $request->boolean('is_smoke_free'),
+            'user_id'             => $user->id,
+            'check_in_date'       => today(),
+            'is_smoke_free'       => $isSmokeFree,
+            'cigarettes_avoided'  => $isSmokeFree ? $tracker->cigarettes_per_day : 0,
+            'money_saved'         => 0,
         ]);
 
-        if ($request->boolean('is_smoke_free')) {
+        if ($isSmokeFree) {
             $daysSinceQuit       = now()->diffInDays($tracker->quit_date);
             $tracker->streak_days        = $tracker->streak_days + 1;
             $tracker->cigarettes_avoided = $tracker->cigarettes_per_day * $daysSinceQuit;
@@ -47,7 +51,7 @@ class CheckInController extends Controller
 
         $tracker->save();
 
-        $msg = $request->boolean('is_smoke_free')
+        $msg = $isSmokeFree
             ? 'Keren! Streak kamu bertambah. Tetap semangat!'
             : 'Tidak apa-apa, besok coba lagi. Kamu pasti bisa!';
 

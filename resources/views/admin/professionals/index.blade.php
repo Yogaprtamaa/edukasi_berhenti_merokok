@@ -31,17 +31,17 @@
                     @else
                         <span class="badge-yellow">Pending</span>
                         <a href="{{ route('admin.professionals.show', $prof) }}" class="badge-blue">Detail</a>
-                        <form action="{{ route('admin.professionals.approve', $prof) }}" method="POST">
+                        <form action="{{ route('admin.professionals.approve', $prof) }}" method="POST" class="flex">
                             @csrf
                             <button class="badge-green cursor-pointer">Setujui</button>
                         </form>
-                        <form action="{{ route('admin.professionals.reject', $prof) }}" method="POST">
+                        <form action="{{ route('admin.professionals.reject', $prof) }}" method="POST" class="flex">
                             @csrf
                             <button class="badge-red cursor-pointer">Tolak</button>
                         </form>
                     @endif
                     <a href="{{ route('admin.professionals.edit', $prof) }}" class="badge-yellow cursor-pointer">Edit</a>
-                    <form action="{{ route('admin.professionals.destroy', $prof) }}" method="POST" onsubmit="return confirm('Hapus profesional {{ $prof->user->name }}?')">
+                    <form action="{{ route('admin.professionals.destroy', $prof) }}" method="POST" class="flex" onsubmit="return confirm('Hapus profesional {{ $prof->user->name }}?')">
                         @csrf
                         @method('DELETE')
                         <button class="badge-red cursor-pointer">Hapus</button>

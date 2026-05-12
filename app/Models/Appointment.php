@@ -23,4 +23,9 @@ class Appointment extends Model
     {
         return $this->belongsTo(Professional::class);
     }
+
+    public function payment()
+    {
+        return $this->hasOne(Payment::class);
+    }
 }

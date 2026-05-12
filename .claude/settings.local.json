@@ -8,7 +8,14 @@
       "Bash(node node_modules/tailwindcss/lib/cli.js init -p)",
       "Bash(npm run:*)",
       "Bash(php artisan:*)",
-      "Bash(npm.cmd run:*)"
+      "Bash(npm.cmd run:*)",
+      "Bash(for f:*)",
+      "Bash(do)",
+      "Bash(sed -i \"s/extends\\(''layouts\\\\.app''\\)/extends\\(''layouts.admin''\\)/\" \"$f\")",
+      "Bash(echo \"updated: $f\")",
+      "Bash(done)",
+      "Bash(sed -i \"s/extends\\(''layouts\\\\.admin''\\)/extends\\(''layouts.app''\\)/\" \"$f\")",
+      "Bash(echo \"reverted: $f\")"
     ]
   }
 }

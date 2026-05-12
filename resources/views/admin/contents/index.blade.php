@@ -30,19 +30,19 @@
                     <p class="mt-1 text-sm text-[#6C6863]">oleh {{ $content->uploader?->name ?? 'Admin' }} - {{ \Carbon\Carbon::parse($content->created_at)->format('d M Y') }}</p>
                     <p class="mt-2 text-sm leading-relaxed text-[#6C6863]">{{ Str::limit(strip_tags($content->body), 150) }}</p>
                 </div>
-                <div class="flex flex-wrap gap-2 lg:justify-end">
+                <div class="flex flex-wrap items-center gap-2 lg:justify-end">
                     @if($content->approval_status === 'pending')
-                        <form action="{{ route('admin.contents.approve', $content) }}" method="POST">
+                        <form action="{{ route('admin.contents.approve', $content) }}" method="POST" class="flex">
                             @csrf
                             <button class="badge-green cursor-pointer">Setujui</button>
                         </form>
-                        <form action="{{ route('admin.contents.reject', $content) }}" method="POST">
+                        <form action="{{ route('admin.contents.reject', $content) }}" method="POST" class="flex">
                             @csrf
                             <button class="badge-red cursor-pointer">Tolak</button>
                         </form>
                     @endif
                     <a href="{{ route('admin.contents.edit', $content) }}" class="badge-yellow cursor-pointer">Edit</a>
-                    <form action="{{ route('admin.contents.destroy', $content) }}" method="POST" onsubmit="return confirm('Hapus konten ini?')">
+                    <form action="{{ route('admin.contents.destroy', $content) }}" method="POST" class="flex" onsubmit="return confirm('Hapus konten ini?')">
                         @csrf
                         @method('DELETE')
                         <button class="badge-red cursor-pointer">Hapus</button>

@@ -23,22 +23,30 @@
 
             <div class="my-6 h-px bg-[#1A1A1A]/10"></div>
 
-            <form action="{{ route('books.order', $book) }}" method="POST" class="space-y-5">
-                @csrf
-                <div>
-                    <label class="editorial-label mb-2 block">Jumlah</label>
-                    <input type="number" name="quantity" value="1" min="1" class="input-field w-32">
+            @if($hasPurchased)
+                <div class="bg-[#D4AF37]/10 p-5">
+                    <span class="editorial-label text-[#D4AF37]">Sudah Dimiliki</span>
+                    <p class="mt-2 text-sm leading-relaxed text-[#6C6863]">Buku ini sudah ada di perpustakaan akun Anda.</p>
                 </div>
-                <div>
-                    <label class="editorial-label mb-2 block">Metode Pembayaran</label>
-                    <select name="payment_method" class="input-field">
-                        <option value="transfer">Transfer Bank</option>
-                        <option value="e-wallet">E-Wallet</option>
-                        <option value="credit_card">Kartu Kredit</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn-primary w-full"><span>Beli Sekarang</span></button>
-            </form>
+                <a href="{{ route('books.read', $book) }}" class="btn-primary mt-5 block w-full text-center"><span>Baca Buku</span></a>
+            @else
+                <form action="{{ route('books.order', $book) }}" method="POST" class="space-y-5">
+                    @csrf
+                    <div>
+                        <label class="editorial-label mb-2 block">Jumlah</label>
+                        <input type="number" name="quantity" value="1" min="1" class="input-field w-32">
+                    </div>
+                    <div>
+                        <label class="editorial-label mb-2 block">Metode Pembayaran</label>
+                        <select name="payment_method" class="input-field">
+                            <option value="transfer">Transfer Bank</option>
+                            <option value="e-wallet">E-Wallet</option>
+                            <option value="credit_card">Kartu Kredit</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary w-full"><span>Beli Sekarang</span></button>
+                </form>
+            @endif
         </div>
     </div>
 @endsection

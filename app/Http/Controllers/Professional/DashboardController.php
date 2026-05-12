@@ -32,7 +32,7 @@ class DashboardController extends Controller
             ->get();
 
         $monthlyEarnings = Payment::whereHas('appointment', fn($q) => $q->where('professional_id', $professional->id))
-            ->where('status', 'paid')
+            ->where('status', 'success')
             ->whereMonth('paid_at', now()->month)
             ->sum('amount');
 

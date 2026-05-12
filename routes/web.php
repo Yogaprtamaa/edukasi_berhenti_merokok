@@ -34,12 +34,18 @@ Route::middleware(['auth', 'role:user'])->group(function () {
     Route::get('/contents/{content}', [\App\Http\Controllers\ContentController::class, 'show'])->name('contents.show');
 
     Route::get('/books',              [\App\Http\Controllers\BookController::class, 'index'])->name('books.index');
+    Route::get('/my-books',           [\App\Http\Controllers\BookController::class, 'purchased'])->name('books.purchased');
+    Route::get('/books/{book}/read',  [\App\Http\Controllers\BookController::class, 'read'])->name('books.read');
     Route::get('/books/{book}',       [\App\Http\Controllers\BookController::class, 'show'])->name('books.show');
     Route::post('/books/{book}/order',[\App\Http\Controllers\BookController::class, 'order'])->name('books.order');
 
     Route::get('/consultations',                      [\App\Http\Controllers\ConsultationController::class, 'index'])->name('consultations.index');
     Route::get('/consultations/{professional}',       [\App\Http\Controllers\ConsultationController::class, 'show'])->name('consultations.show');
     Route::post('/consultations/{professional}/book', [\App\Http\Controllers\ConsultationController::class, 'book'])->name('consultations.book');
+
+    Route::get('/payments',                 [\App\Http\Controllers\PaymentController::class, 'index'])->name('payments.index');
+    Route::get('/payments/{payment}',       [\App\Http\Controllers\PaymentController::class, 'show'])->name('payments.show');
+    Route::post('/payments/{payment}/pay',  [\App\Http\Controllers\PaymentController::class, 'pay'])->name('payments.pay');
 
     Route::get('/forums',                 [\App\Http\Controllers\ForumController::class, 'index'])->name('forums.index');
     Route::post('/forums',                [\App\Http\Controllers\ForumController::class, 'store'])->name('forums.store');

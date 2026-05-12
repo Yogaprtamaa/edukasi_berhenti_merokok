@@ -37,6 +37,7 @@ class ForumController extends Controller
             'user_id' => Auth::id(),
             'title'   => $data['title'],
             'body'    => $data['body'],
+            'content' => $data['body'],
         ]);
 
         return redirect()->route('forums.index')->with('success', 'Thread berhasil dibuat!');
@@ -50,7 +51,10 @@ class ForumController extends Controller
             'forum_id' => $forum->id,
             'user_id'  => Auth::id(),
             'body'     => $data['body'],
+            'content'  => $data['body'],
         ]);
+
+        $forum->increment('replies_count');
 
         return redirect()->route('forums.show', $forum)->with('success', 'Balasan berhasil dikirim!');
     }

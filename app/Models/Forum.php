@@ -9,7 +9,16 @@ class Forum extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'title', 'body', 'views'];
+    protected $fillable = [
+        'user_id',
+        'title',
+        'body',
+        'content',
+        'category',
+        'views',
+        'views_count',
+        'replies_count',
+    ];
 
     public function user()
     {

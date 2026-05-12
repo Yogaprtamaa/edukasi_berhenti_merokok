@@ -7,6 +7,7 @@ use App\Models\Payment;
 use App\Models\Professional;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class ConsultationController extends Controller
 {
@@ -45,16 +46,18 @@ class ConsultationController extends Controller
             'status'           => 'pending',
         ]);
 
-        Payment::create([
+        $payment = Payment::create([
             'appointment_id' => $appointment->id,
             'user_id'        => Auth::id(),
+            'reference_id'   => 'CONS-' . now()->format('YmdHis') . '-' . Str::upper(Str::random(6)),
             'amount'         => $professional->hourly_rate * $data['duration_hours'],
             'duration_hours' => $data['duration_hours'],
             'status'         => 'pending',
             'payment_method' => $data['payment_method'],
+            'description'    => 'Booking konsultasi #' . $appointment->id,
         ]);
 
-        return redirect()->route('consultations.index')
-            ->with('success', 'Booking berhasil! Menunggu konfirmasi dari profesional.');
+        return redirect()->route('payments.show', $payment)
+            ->with('success', 'Booking berhasil dibuat. Silakan selesaikan pembayaran.');
     }
 }

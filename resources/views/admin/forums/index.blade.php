@@ -24,9 +24,9 @@
                         <span>{{ \Carbon\Carbon::parse($forum->created_at)->diffForHumans() }}</span>
                     </div>
                 </div>
-                <div class="flex gap-2">
+                <div class="flex items-center gap-2">
                     <a href="{{ route('admin.forums.edit', $forum) }}" class="badge-yellow cursor-pointer">Edit</a>
-                    <form action="{{ route('admin.forums.destroy', $forum) }}" method="POST" onsubmit="return confirm('Hapus thread ini beserta semua balasannya?')">
+                    <form action="{{ route('admin.forums.destroy', $forum) }}" method="POST" class="flex" onsubmit="return confirm('Hapus thread ini beserta semua balasannya?')">
                         @csrf
                         @method('DELETE')
                         <button class="badge-red cursor-pointer">Hapus</button>

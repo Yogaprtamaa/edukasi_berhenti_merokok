@@ -32,7 +32,11 @@ class ForumController extends Controller
             'content' => ['required', 'string'],
         ]);
 
-        $forum->update($data);
+        $forum->update([
+            'title' => $data['title'],
+            'body' => $data['content'],
+            'content' => $data['content'],
+        ]);
 
         return redirect()->route('admin.forums')->with('success', 'Thread forum berhasil diperbarui.');
     }
