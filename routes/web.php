@@ -17,12 +17,14 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
+Route::get('/', fn() => redirect()->route('home'));
+
 // ── Home (semua role) ─────────────────────────────────────────────────────────
 Route::get('/home', [HomeController::class, 'index'])->name('home')->middleware('auth');
 
 // ── User routes ───────────────────────────────────────────────────────────────
 Route::middleware(['auth', 'role:user'])->group(function () {
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::post('/checkin',  [\App\Http\Controllers\User\CheckInController::class, 'store'])->name('user.checkin');
     Route::get('/progress',  [\App\Http\Controllers\User\ProgressController::class, 'index'])->name('user.progress');
@@ -91,6 +93,16 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::put('/forums/{forum}',                   [\App\Http\Controllers\Admin\ForumController::class, 'update'])->name('forums.update');
     Route::delete('/forums/{forum}',                [\App\Http\Controllers\Admin\ForumController::class, 'destroy'])->name('forums.destroy');
     Route::delete('/forum-replies/{reply}',         [\App\Http\Controllers\Admin\ForumController::class, 'destroyReply'])->name('forum-replies.destroy');
+
+    // Transactions
+    Route::get('/payments',                         [\App\Http\Controllers\Admin\PaymentController::class, 'index'])->name('payments');
+    Route::get('/payments/{payment}',               [\App\Http\Controllers\Admin\PaymentController::class, 'show'])->name('payments.show');
+    Route::patch('/payments/{payment}/status',      [\App\Http\Controllers\Admin\PaymentController::class, 'updateStatus'])->name('payments.status');
+    Route::get('/orders',                           [\App\Http\Controllers\Admin\OrderController::class, 'index'])->name('orders');
+    Route::get('/orders/{order}',                   [\App\Http\Controllers\Admin\OrderController::class, 'show'])->name('orders.show');
+    Route::patch('/orders/{order}/status',          [\App\Http\Controllers\Admin\OrderController::class, 'updateStatus'])->name('orders.status');
+    Route::get('/appointments',                     [\App\Http\Controllers\Admin\AppointmentController::class, 'index'])->name('appointments');
+    Route::patch('/appointments/{appointment}/status', [\App\Http\Controllers\Admin\AppointmentController::class, 'updateStatus'])->name('appointments.status');
 });
 
 // ── Professional routes ───────────────────────────────────────────────────────
@@ -100,8 +112,10 @@ Route::middleware(['auth', 'role:professional'])->prefix('professional')->name('
     Route::get('/setup',  [\App\Http\Controllers\Professional\SetupController::class, 'show'])->name('setup');
     Route::post('/setup', [\App\Http\Controllers\Professional\SetupController::class, 'store']);
 
-    Route::get('/appointments',                        [\App\Http\Controllers\Professional\AppointmentController::class, 'index'])->name('appointments');
-    Route::post('/appointments/{appointment}/confirm', [\App\Http\Controllers\Professional\AppointmentController::class, 'confirm'])->name('appointments.confirm');
+    Route::get('/appointments',                         [\App\Http\Controllers\Professional\AppointmentController::class, 'index'])->name('appointments');
+    Route::post('/appointments/{appointment}/confirm',  [\App\Http\Controllers\Professional\AppointmentController::class, 'confirm'])->name('appointments.confirm');
+    Route::post('/appointments/{appointment}/complete', [\App\Http\Controllers\Professional\AppointmentController::class, 'complete'])->name('appointments.complete');
+    Route::post('/appointments/{appointment}/cancel',   [\App\Http\Controllers\Professional\AppointmentController::class, 'cancel'])->name('appointments.cancel');
 
     Route::get('/schedule',              [\App\Http\Controllers\Professional\ScheduleController::class, 'index'])->name('schedule');
     Route::post('/schedule',             [\App\Http\Controllers\Professional\ScheduleController::class, 'store'])->name('schedule.store');

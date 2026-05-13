@@ -29,6 +29,8 @@ class ConsultationController extends Controller
 
     public function book(Request $request, Professional $professional)
     {
+        abort_if(!$professional->is_verified, 404);
+
         $data = $request->validate([
             'schedule_id'      => ['required', 'exists:schedules,id'],
             'appointment_date' => ['required', 'date', 'after:today'],
@@ -36,6 +38,14 @@ class ConsultationController extends Controller
             'duration_hours'   => ['required', 'numeric', 'min:1', 'max:8'],
             'payment_method'   => ['required', 'in:transfer,e-wallet,credit_card'],
         ]);
+
+        $schedule = $professional->schedules()->findOrFail($data['schedule_id']);
+
+        if ($schedule->mode !== 'hybrid' && $schedule->mode !== $data['mode']) {
+            return back()
+                ->withInput()
+                ->with('error', 'Mode konsultasi tidak sesuai dengan jadwal profesional.');
+        }
 
         $appointment = Appointment::create([
             'user_id'          => Auth::id(),

@@ -60,7 +60,7 @@ class AuthController extends Controller
                 ->with('success', 'Akun berhasil dibuat. Lengkapi data profesional Anda.');
         }
 
-        return redirect()->route('dashboard')
+        return redirect()->route('home')
             ->with('success', 'Selamat datang, ' . $user->name . '!');
     }
 
@@ -74,10 +74,6 @@ class AuthController extends Controller
 
     private function redirectByRole()
     {
-        return match (Auth::user()->role) {
-            'admin'        => redirect()->route('admin.dashboard'),
-            'professional' => redirect()->route('professional.dashboard'),
-            default        => redirect()->route('dashboard'),
-        };
+        return redirect()->route('home');
     }
 }

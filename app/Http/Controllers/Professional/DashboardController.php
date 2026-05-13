@@ -26,7 +26,15 @@ class DashboardController extends Controller
             ->whereDate('appointment_date', today())
             ->count();
 
-        $todayAppointmentList = Appointment::with('user')
+        $confirmedAppointments = Appointment::where('professional_id', $professional->id)
+            ->where('status', 'confirmed')
+            ->count();
+
+        $completedAppointments = Appointment::where('professional_id', $professional->id)
+            ->where('status', 'completed')
+            ->count();
+
+        $todayAppointmentList = Appointment::with(['user', 'payment'])
             ->where('professional_id', $professional->id)
             ->whereDate('appointment_date', today())
             ->get();
@@ -38,14 +46,52 @@ class DashboardController extends Controller
 
         $schedules = $professional->schedules()->orderBy('day_of_week')->get();
 
+        $earningsChart = collect(range(5, 0))->map(function ($monthOffset) use ($professional) {
+            $date = now()->subMonths($monthOffset);
+            $amount = Payment::whereHas('appointment', fn($query) => $query->where('professional_id', $professional->id))
+                ->where('status', 'success')
+                ->whereYear('paid_at', $date->year)
+                ->whereMonth('paid_at', $date->month)
+                ->sum('amount');
+
+            return [
+                'label' => $date->format('M'),
+                'amount' => (float) $amount,
+            ];
+        });
+
+        $maxEarnings = max($earningsChart->max('amount'), 1);
+
+        $appointmentStatusChart = collect(['pending', 'confirmed', 'completed', 'cancelled'])
+            ->map(fn($status) => [
+                'label' => ucfirst($status),
+                'count' => Appointment::where('professional_id', $professional->id)
+                    ->where('status', $status)
+                    ->count(),
+            ]);
+
+        $paymentStatusChart = collect(['pending', 'success', 'failed', 'cancelled'])
+            ->map(fn($status) => [
+                'label' => ucfirst($status),
+                'count' => Payment::whereHas('appointment', fn($query) => $query->where('professional_id', $professional->id))
+                    ->where('status', $status)
+                    ->count(),
+            ]);
+
         return view('professional.dashboard', compact(
             'professional',
             'totalAppointments',
             'pendingAppointments',
+            'confirmedAppointments',
+            'completedAppointments',
             'todayAppointments',
             'todayAppointmentList',
             'monthlyEarnings',
-            'schedules'
+            'schedules',
+            'earningsChart',
+            'maxEarnings',
+            'appointmentStatusChart',
+            'paymentStatusChart'
         ));
     }
 }

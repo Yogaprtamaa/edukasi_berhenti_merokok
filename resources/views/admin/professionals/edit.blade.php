@@ -1,5 +1,5 @@
 @extends('layouts.app')
-nah
+
 @section('title', 'Edit Profesional')
 
 @section('content')
