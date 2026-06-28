@@ -23,7 +23,7 @@ class DashboardController extends Controller
             ->where('status', 'pending')->count();
 
         $todayAppointments = Appointment::where('professional_id', $professional->id)
-            ->whereDate('appointment_date', today())
+            ->whereBetween('appointment_date', [today()->startOfDay(), today()->endOfDay()])
             ->count();
 
         $confirmedAppointments = Appointment::where('professional_id', $professional->id)
@@ -36,12 +36,12 @@ class DashboardController extends Controller
 
         $todayAppointmentList = Appointment::with(['user', 'payment'])
             ->where('professional_id', $professional->id)
-            ->whereDate('appointment_date', today())
+            ->whereBetween('appointment_date', [today()->startOfDay(), today()->endOfDay()])
             ->get();
 
         $monthlyEarnings = Payment::whereHas('appointment', fn($q) => $q->where('professional_id', $professional->id))
             ->where('status', 'success')
-            ->whereMonth('paid_at', now()->month)
+            ->whereBetween('paid_at', [now()->startOfMonth(), now()->endOfMonth()])
             ->sum('amount');
 
         $schedules = $professional->schedules()->orderBy('day_of_week')->get();
@@ -50,8 +50,7 @@ class DashboardController extends Controller
             $date = now()->subMonths($monthOffset);
             $amount = Payment::whereHas('appointment', fn($query) => $query->where('professional_id', $professional->id))
                 ->where('status', 'success')
-                ->whereYear('paid_at', $date->year)
-                ->whereMonth('paid_at', $date->month)
+                ->whereBetween('paid_at', [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()])
                 ->sum('amount');
 
             return [

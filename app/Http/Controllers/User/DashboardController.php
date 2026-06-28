@@ -16,7 +16,7 @@ class DashboardController extends Controller
         $tracker = $user->progressTracker;
 
         $checkedInToday = DailyCheckIn::where('user_id', $user->id)
-            ->whereDate('check_in_date', today())
+            ->onDate(today())
             ->exists();
 
         $latestContents = Content::where('is_published', true)

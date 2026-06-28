@@ -27,12 +27,14 @@ class ProgressController extends Controller
         ProgressTracker::updateOrCreate(
             ['user_id' => Auth::id()],
             [
-                'quit_date'          => $data['quit_date'],
-                'streak_days'        => 0,
-                'cigarettes_per_day' => $data['cigarettes_per_day'],
-                'cigarettes_avoided' => 0,
-                'money_saved'        => 0,
-                'last_check_in'      => null,
+                'quit_date'           => $data['quit_date'],
+                'streak_days'         => 0,
+                'cigarettes_per_day'  => $data['cigarettes_per_day'],
+                'price_per_pack'      => $data['price_per_pack'],
+                'cigarettes_per_pack' => $data['cigarettes_per_pack'],
+                'cigarettes_avoided'  => 0,
+                'money_saved'         => 0,
+                'last_check_in'       => null,
             ]
         );
 

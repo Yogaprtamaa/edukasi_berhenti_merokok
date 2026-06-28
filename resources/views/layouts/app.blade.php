@@ -225,6 +225,26 @@
                     </div>
                 @endif
 
+                @if($errors->any())
+                    <div class="mx-auto max-w-[1600px] px-5 pt-5 sm:px-8 md:px-12">
+                        <div class="border border-red-700/40 bg-red-700/5 px-4 py-3 text-sm leading-relaxed text-red-800">
+                            <div class="flex items-start gap-3">
+                                <svg class="mt-0.5 h-5 w-5 shrink-0 text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                                </svg>
+                                <div>
+                                    <p class="font-medium">Periksa kembali isian berikut:</p>
+                                    <ul class="mt-1 list-inside list-disc space-y-0.5">
+                                        @foreach($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 <main class="mx-auto max-w-[1600px] px-5 py-8 sm:px-8 sm:py-10 md:px-12 md:py-14">
                     @yield('content')
                 </main>

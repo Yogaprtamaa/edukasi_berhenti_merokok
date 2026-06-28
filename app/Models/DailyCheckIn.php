@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Jenssegers\Mongodb\Eloquent\Model;
 
@@ -26,5 +27,18 @@ class DailyCheckIn extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Filter check-in pada satu hari penuh.
+     * Pakai range query karena whereDate() tidak didukung MongoDB (Jenssegers).
+     */
+    public function scopeOnDate($query, $date)
+    {
+        $date = Carbon::parse($date);
+
+        return $query
+            ->where('check_in_date', '>=', $date->copy()->startOfDay())
+            ->where('check_in_date', '<', $date->copy()->addDay()->startOfDay());
     }
 }

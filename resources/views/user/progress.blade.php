@@ -37,19 +37,19 @@
                 @csrf
                 <div>
                     <label class="editorial-label mb-2 block">Tanggal Berhenti Merokok</label>
-                    <input type="date" name="quit_date" value="{{ $tracker->quit_date }}" class="input-field">
+                    <input type="date" name="quit_date" value="{{ old('quit_date', \Carbon\Carbon::parse($tracker->quit_date)->format('Y-m-d')) }}" max="{{ date('Y-m-d') }}" class="input-field">
                 </div>
                 <div>
                     <label class="editorial-label mb-2 block">Rokok per Hari (sebelumnya)</label>
-                    <input type="number" name="cigarettes_per_day" value="{{ $tracker->cigarettes_per_day }}" min="1" class="input-field">
+                    <input type="number" name="cigarettes_per_day" value="{{ old('cigarettes_per_day', $tracker->cigarettes_per_day) }}" min="1" class="input-field">
                 </div>
                 <div>
                     <label class="editorial-label mb-2 block">Harga per Bungkus (Rp)</label>
-                    <input type="number" name="price_per_pack" value="25000" min="0" class="input-field">
+                    <input type="number" name="price_per_pack" value="{{ old('price_per_pack', $tracker->price_per_pack ?? 25000) }}" min="0" class="input-field">
                 </div>
                 <div>
                     <label class="editorial-label mb-2 block">Rokok per Bungkus</label>
-                    <input type="number" name="cigarettes_per_pack" value="16" min="1" class="input-field">
+                    <input type="number" name="cigarettes_per_pack" value="{{ old('cigarettes_per_pack', $tracker->cigarettes_per_pack ?? 16) }}" min="1" class="input-field">
                 </div>
                 <div class="md:col-span-2">
                     <button type="submit" class="btn-primary"><span>Simpan Perubahan</span></button>

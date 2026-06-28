@@ -16,7 +16,7 @@ class DashboardController extends Controller
     {
         $totalUsers        = User::where('role', 'user')->count();
         $newUsersThisMonth = User::where('role', 'user')
-            ->whereMonth('created_at', now()->month)
+            ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
             ->count();
 
         $totalProfessionals   = Professional::where('is_verified', true)->count();
@@ -50,8 +50,7 @@ class DashboardController extends Controller
         $revenueChart = collect(range(5, 0))->map(function ($monthOffset) {
             $date = now()->subMonths($monthOffset);
             $amount = Payment::where('status', 'success')
-                ->whereYear('paid_at', $date->year)
-                ->whereMonth('paid_at', $date->month)
+                ->whereBetween('paid_at', [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()])
                 ->sum('amount');
 
             return [

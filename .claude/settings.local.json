@@ -15,7 +15,8 @@
       "Bash(echo \"updated: $f\")",
       "Bash(done)",
       "Bash(sed -i \"s/extends\\(''layouts\\\\.admin''\\)/extends\\(''layouts.app''\\)/\" \"$f\")",
-      "Bash(echo \"reverted: $f\")"
+      "Bash(echo \"reverted: $f\")",
+      "Bash(rtk git *)"
     ]
   }
 }

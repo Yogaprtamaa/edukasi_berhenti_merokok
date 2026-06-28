@@ -22,7 +22,7 @@ class CheckInController extends Controller
         }
 
         $alreadyCheckedIn = DailyCheckIn::where('user_id', $user->id)
-            ->whereDate('check_in_date', today())
+            ->onDate(today())
             ->exists();
 
         if ($alreadyCheckedIn) {
@@ -31,21 +31,24 @@ class CheckInController extends Controller
 
         $isSmokeFree = $request->boolean('is_smoke_free');
 
+        $dailyAvoided    = $isSmokeFree ? $tracker->cigarettes_per_day : 0;
+        $dailyMoneySaved = $tracker->calculateMoneySaved($dailyAvoided);
+
         DailyCheckIn::create([
             'user_id'             => $user->id,
             'check_in_date'       => today(),
             'is_smoke_free'       => $isSmokeFree,
-            'cigarettes_avoided'  => $isSmokeFree ? $tracker->cigarettes_per_day : 0,
-            'money_saved'         => 0,
+            'cigarettes_avoided'  => $dailyAvoided,
+            'money_saved'         => $dailyMoneySaved,
         ]);
 
         if ($isSmokeFree) {
-            $daysSinceQuit       = now()->diffInDays($tracker->quit_date);
             $tracker->streak_days        = $tracker->streak_days + 1;
-            $tracker->cigarettes_avoided = $tracker->cigarettes_per_day * $daysSinceQuit;
+            $tracker->cigarettes_avoided = $tracker->cigarettes_avoided + $dailyAvoided;
+            $tracker->money_saved        = $tracker->calculateMoneySaved($tracker->cigarettes_avoided);
             $tracker->last_check_in      = today();
         } else {
-            $tracker->streak_days = 0;
+            $tracker->streak_days   = 0;
             $tracker->last_check_in = today();
         }
 

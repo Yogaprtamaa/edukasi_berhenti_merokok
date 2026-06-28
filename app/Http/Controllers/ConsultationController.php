@@ -42,7 +42,7 @@ class ConsultationController extends Controller
         abort_if(!$professional->is_verified, 404);
 
         $data = $request->validate([
-            'schedule_id'      => ['required', 'exists:schedules,id'],
+            'schedule_id'      => ['required', 'exists:schedules,_id'],
             'appointment_date' => ['required', 'date', 'after:today'],
             'mode'             => ['required', 'in:online,offline'],
             'duration_hours'   => ['required', 'numeric', 'min:1', 'max:8'],
