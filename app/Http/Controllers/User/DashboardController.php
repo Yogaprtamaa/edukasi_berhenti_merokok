@@ -24,11 +24,15 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        $latestForums = Forum::withCount('forumReplies')
-            ->with('user')
+        $latestForums = Forum::with('user')
             ->latest()
             ->take(5)
             ->get();
+
+        // MongoDB tidak mendukung withCount lintas-koleksi; hitung via relasi.
+        $latestForums->each(function ($forum) {
+            $forum->forum_replies_count = $forum->forumReplies()->count();
+        });
 
         return view('user.dashboard', compact('tracker', 'checkedInToday', 'latestContents', 'latestForums'));
     }

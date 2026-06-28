@@ -42,6 +42,7 @@ Route::middleware(['auth', 'role:user'])->group(function () {
     Route::post('/books/{book}/order',[\App\Http\Controllers\BookController::class, 'order'])->name('books.order');
 
     Route::get('/consultations',                      [\App\Http\Controllers\ConsultationController::class, 'index'])->name('consultations.index');
+    Route::get('/my-appointments',                    [\App\Http\Controllers\ConsultationController::class, 'appointments'])->name('consultations.appointments');
     Route::get('/consultations/{professional}',       [\App\Http\Controllers\ConsultationController::class, 'show'])->name('consultations.show');
     Route::post('/consultations/{professional}/book', [\App\Http\Controllers\ConsultationController::class, 'book'])->name('consultations.book');
 

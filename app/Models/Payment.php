@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Jenssegers\Mongodb\Eloquent\Model;
 
 class Payment extends Model
 {
@@ -13,6 +13,11 @@ class Payment extends Model
         'appointment_id', 'user_id', 'reference_id', 'amount', 'duration_hours',
         'status', 'refund_percentage', 'refund_amount',
         'payment_method', 'description', 'paid_at', 'refunded_at',
+    ];
+
+    protected $casts = [
+        'paid_at'     => 'datetime',
+        'refunded_at' => 'datetime',
     ];
 
     public function appointment()

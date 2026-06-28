@@ -13,19 +13,12 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('users');
         Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name', 100);
-            $table->string('email', 150)->unique();
-            $table->string('password');
-            $table->date('birth_date')->nullable();
-            $table->enum('role', ['user', 'admin', 'professional'])->default('user');
-            $table->boolean('is_email_verified')->default(false);
-            $table->timestamps();
+            // MongoDB schemaless: kolom dibuat per-dokumen oleh model/seeder.
+            // Yang relevan hanyalah unique index pada email.
+            $table->unique('email');
         });
-        Schema::enableForeignKeyConstraints();
     }
 
     /**

@@ -7,13 +7,12 @@ return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement('ALTER TABLE daily_check_ins MODIFY cigarettes_avoided INT NOT NULL DEFAULT 0');
-        DB::statement('ALTER TABLE daily_check_ins MODIFY money_saved DECIMAL(10, 2) NOT NULL DEFAULT 0.00');
+        // MongoDB schemaless: nilai default kolom diatur oleh model/seeder,
+        // tidak ada ALTER TABLE. Migration ini sengaja dikosongkan.
     }
 
     public function down(): void
     {
-        DB::statement('ALTER TABLE daily_check_ins MODIFY cigarettes_avoided INT NOT NULL');
-        DB::statement('ALTER TABLE daily_check_ins MODIFY money_saved DECIMAL(10, 2) NOT NULL');
+        //
     }
 };

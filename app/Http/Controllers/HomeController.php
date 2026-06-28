@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use App\Models\Content;
 use App\Models\Book;
 use App\Models\Forum;
 use App\Models\Professional;
+use App\Models\ProgressTracker;
 
 class HomeController extends Controller
 {
@@ -23,9 +23,7 @@ class HomeController extends Controller
 
         $tracker = null;
         if (Auth::user()->role === 'user') {
-            $tracker = DB::table('progress_trackers')
-                ->where('user_id', Auth::id())
-                ->first();
+            $tracker = ProgressTracker::where('user_id', Auth::id())->first();
         }
 
         $latestContents = Content::where('approval_status', 'approved')

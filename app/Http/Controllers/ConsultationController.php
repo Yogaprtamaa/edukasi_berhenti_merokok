@@ -27,6 +27,16 @@ class ConsultationController extends Controller
         return view('consultations.show', compact('professional', 'schedules'));
     }
 
+    public function appointments()
+    {
+        $appointments = Appointment::with(['professional.user', 'payment'])
+            ->where('user_id', Auth::id())
+            ->latest()
+            ->paginate(10);
+
+        return view('consultations.appointments', compact('appointments'));
+    }
+
     public function book(Request $request, Professional $professional)
     {
         abort_if(!$professional->is_verified, 404);

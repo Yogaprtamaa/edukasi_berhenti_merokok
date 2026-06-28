@@ -11,10 +11,14 @@ class ForumController extends Controller
 {
     public function index()
     {
-        $forums = Forum::withCount('forumReplies')
-            ->with('user')
+        $forums = Forum::with('user')
             ->latest()
             ->paginate(20);
+
+        // MongoDB tidak mendukung withCount lintas-koleksi; hitung via relasi.
+        $forums->getCollection()->each(function ($forum) {
+            $forum->forum_replies_count = $forum->forumReplies()->count();
+        });
 
         return view('admin.forums.index', compact('forums'));
     }

@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Jenssegers\Mongodb\Eloquent\Model;
 
 class Appointment extends Model
 {
@@ -12,6 +12,10 @@ class Appointment extends Model
     protected $fillable = [
         'user_id', 'professional_id', 'schedule_id',
         'mode', 'status', 'appointment_date',
+    ];
+
+    protected $casts = [
+        'appointment_date' => 'datetime',
     ];
 
     public function user()

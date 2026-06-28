@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Jenssegers\Mongodb\Eloquent\Model;
 
 class Professional extends Model
 {
@@ -12,6 +12,11 @@ class Professional extends Model
     protected $fillable = [
         'user_id', 'type', 'specialization', 'license_number',
         'document_url', 'is_verified', 'verified_at', 'hourly_rate',
+    ];
+
+    protected $casts = [
+        'is_verified' => 'boolean',
+        'verified_at' => 'datetime',
     ];
 
     public function user()

@@ -13,6 +13,12 @@ class DummyDataSeeder extends Seeder
 {
     public function run(): void
     {
+        // Helper: jenssegers query builder TIDAK mengonversi Carbon ke tanggal BSON
+        // (akan tersimpan sebagai sub-dokumen). Bungkus nilai tanggal sebagai UTCDateTime.
+        $dt = fn ($value) => new \MongoDB\BSON\UTCDateTime(
+            $value instanceof \DateTimeInterface ? $value : Carbon::parse($value)
+        );
+
         // ── Users ──────────────────────────────────────────────────────────────
         $userData = [
             ['name' => 'Budi Santoso',   'email' => 'budi@test.com',   'birth_date' => '1990-05-12'],
@@ -124,15 +130,16 @@ class DummyDataSeeder extends Seeder
                     ->first();
 
                 if (!$existing) {
-                    $id = DB::table('schedules')->insertGetId([
+                    // cast ke string agar foreign key konsisten dengan model Eloquent
+                    $id = (string) DB::table('schedules')->insertGetId([
                         'professional_id' => $profId,
                         'day_of_week'     => $slot['day_of_week'],
                         'start_time'      => $slot['start_time'],
                         'end_time'        => $slot['end_time'],
                         'mode'            => $slot['mode'],
                         'is_available'    => true,
-                        'created_at'      => Carbon::now(),
-                        'updated_at'      => Carbon::now(),
+                        'created_at'      => $dt(Carbon::now()),
+                        'updated_at'      => $dt(Carbon::now()),
                     ]);
                     $scheduleIds[$profId] = $id;
                 } else {
@@ -148,7 +155,7 @@ class DummyDataSeeder extends Seeder
                     'user_id'          => $createdUsers[0]->id,
                     'professional_id'  => $createdProfessionals[0]->id,
                     'schedule_id'      => $scheduleIds[$createdProfessionals[0]->id] ?? null,
-                    'appointment_date' => Carbon::now()->addDays(3)->format('Y-m-d H:i:s'),
+                    'appointment_date' => $dt(Carbon::now()->addDays(3)),
                     'mode'             => 'online',
                     'status'           => 'confirmed',
                     'notes'            => 'Konsultasi pertama untuk program berhenti merokok',
@@ -157,7 +164,7 @@ class DummyDataSeeder extends Seeder
                     'user_id'          => $createdUsers[1]->id,
                     'professional_id'  => $createdProfessionals[0]->id,
                     'schedule_id'      => $scheduleIds[$createdProfessionals[0]->id] ?? null,
-                    'appointment_date' => Carbon::now()->addDays(5)->format('Y-m-d H:i:s'),
+                    'appointment_date' => $dt(Carbon::now()->addDays(5)),
                     'mode'             => 'offline',
                     'status'           => 'pending',
                     'notes'            => null,
@@ -166,7 +173,7 @@ class DummyDataSeeder extends Seeder
                     'user_id'          => $createdUsers[2]->id,
                     'professional_id'  => $createdProfessionals[1]->id,
                     'schedule_id'      => $scheduleIds[$createdProfessionals[1]->id] ?? null,
-                    'appointment_date' => Carbon::now()->addDays(7)->format('Y-m-d H:i:s'),
+                    'appointment_date' => $dt(Carbon::now()->addDays(7)),
                     'mode'             => 'online',
                     'status'           => 'pending',
                     'notes'            => 'Sesi terapi kognitif perilaku',
@@ -180,8 +187,8 @@ class DummyDataSeeder extends Seeder
                     ->exists();
                 if (!$exists) {
                     DB::table('appointments')->insert(array_merge($a, [
-                        'created_at' => Carbon::now(),
-                        'updated_at' => Carbon::now(),
+                        'created_at' => $dt(Carbon::now()),
+                        'updated_at' => $dt(Carbon::now()),
                     ]));
                 }
             }
@@ -230,9 +237,9 @@ class DummyDataSeeder extends Seeder
                     'body'         => $c['body'],
                     'type'         => $c['type'],
                     'is_published' => true,
-                    'published_at' => Carbon::now()->subDays(rand(1, 30)),
-                    'created_at'   => Carbon::now(),
-                    'updated_at'   => Carbon::now(),
+                    'published_at' => $dt(Carbon::now()->subDays(rand(1, 30))),
+                    'created_at'   => $dt(Carbon::now()),
+                    'updated_at'   => $dt(Carbon::now()),
                 ]);
             }
         }
@@ -286,8 +293,8 @@ class DummyDataSeeder extends Seeder
             if (!$exists) {
                 DB::table('books')->insert(array_merge($b, [
                     'is_available' => true,
-                    'created_at'   => Carbon::now(),
-                    'updated_at'   => Carbon::now(),
+                    'created_at'   => $dt(Carbon::now()),
+                    'updated_at'   => $dt(Carbon::now()),
                 ]));
             }
         }
@@ -351,14 +358,15 @@ class DummyDataSeeder extends Seeder
             foreach ($forumData as $fd) {
                 $exists = DB::table('forums')->where('title', $fd['title'])->first();
                 if (!$exists) {
-                    $forumId = DB::table('forums')->insertGetId([
+                    // cast ke string agar forum_id konsisten dengan model Eloquent
+                    $forumId = (string) DB::table('forums')->insertGetId([
                         'user_id'       => $fd['user']->id,
                         'title'         => $fd['title'],
                         'content'       => $fd['content'],
                         'views_count'   => $fd['views_count'],
                         'replies_count' => count($fd['replies']),
-                        'created_at'    => Carbon::now()->subDays(rand(1, 20)),
-                        'updated_at'    => Carbon::now(),
+                        'created_at'    => $dt(Carbon::now()->subDays(rand(1, 20))),
+                        'updated_at'    => $dt(Carbon::now()),
                     ]);
 
                     foreach ($fd['replies'] as [$replyUser, $replyBody]) {
@@ -367,8 +375,8 @@ class DummyDataSeeder extends Seeder
                             'user_id'     => $replyUser->id,
                             'content'     => $replyBody,
                             'likes_count' => 0,
-                            'created_at'  => Carbon::now()->subHours(rand(1, 48)),
-                            'updated_at'  => Carbon::now(),
+                            'created_at'  => $dt(Carbon::now()->subHours(rand(1, 48))),
+                            'updated_at'  => $dt(Carbon::now()),
                         ]);
                     }
                 }
@@ -387,12 +395,15 @@ class DummyDataSeeder extends Seeder
                 $exists = DB::table('progress_trackers')->where('user_id', $user->id)->exists();
                 if (!$exists) {
                     DB::table('progress_trackers')->insert([
-                        'user_id'               => $user->id,
-                        'total_rokok_dihindari' => $rokok,
-                        'total_uang_dihemat'    => $uang,
-                        'streak_hari'           => $streak,
-                        'created_at'            => Carbon::now(),
-                        'updated_at'            => Carbon::now(),
+                        'user_id'            => $user->id,
+                        'quit_date'          => $dt(Carbon::now()->subDays($streak)),
+                        'streak_days'        => $streak,
+                        'cigarettes_per_day' => 12,
+                        'cigarettes_avoided' => $rokok,
+                        'money_saved'        => $uang,
+                        'last_check_in'      => $dt(Carbon::now()),
+                        'created_at'         => $dt(Carbon::now()),
+                        'updated_at'         => $dt(Carbon::now()),
                     ]);
                 }
             }
@@ -447,9 +458,9 @@ class DummyDataSeeder extends Seeder
                         'message'    => $n['message'],
                         'type'       => $n['type'],
                         'is_read'    => $n['is_read'],
-                        'read_at'    => $n['read_at'],
-                        'created_at' => Carbon::now()->subHours(rand(1, 48)),
-                        'updated_at' => Carbon::now(),
+                        'read_at'    => $n['read_at'] ? $dt($n['read_at']) : null,
+                        'created_at' => $dt(Carbon::now()->subHours(rand(1, 48))),
+                        'updated_at' => $dt(Carbon::now()),
                     ]);
                 }
             }

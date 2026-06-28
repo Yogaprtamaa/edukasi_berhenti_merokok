@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Jenssegers\Mongodb\Eloquent\Model;
 
 class DailyCheckIn extends Model
 {
@@ -16,6 +16,11 @@ class DailyCheckIn extends Model
         'cigarettes_avoided',
         'money_saved',
         'notification_id',
+    ];
+
+    protected $casts = [
+        'check_in_date' => 'date',
+        'is_smoke_free' => 'boolean',
     ];
 
     public function user()
