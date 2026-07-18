@@ -6,13 +6,13 @@
 **Universitas Paramadina — Tahun Ajaran 2025/2026**
 
 **Disusun Oleh:**
-- Yoga Pratama (25020100114)
+- Yoga Pratama (125103056)
 - Alfianus Fierik Feto (125103031)
 - Farel Abrar Hilalby (125103081)
 - Mutiara Alia Putri (125103091)
 
 **Framework:** Laravel 9 · **Database Awal:** MySQL 8 (relasional) · **Database Akhir:** MongoDB Community 7 (dokumen/NoSQL)
-**Driver:** `mongodb/laravel-mongodb` (Jenssegers) ^3.9 · **Tanggal Laporan:** 5 Juli 2026
+**Driver:** `mongodb/laravel-mongodb` (Jenssegers) ^3.9 · **Tanggal Laporan:** 18 Juli 2026
 
 ---
 
@@ -78,7 +78,9 @@ Migrasi ini adalah latihan akademik untuk memahami perbedaan paradigma. Secara t
 | **Skalabilitas horizontal** | MongoDB dirancang untuk sharding; cocok bila jumlah user check-in harian tumbuh besar |
 | **Tanpa migrasi schema formal** | Perubahan struktur tidak butuh DDL yang mengunci tabel |
 
-Konsekuensinya: kita **kehilangan jaminan relasional bawaan** (foreign key constraint, JOIN native, `whereDate`), yang harus digantikan di lapisan aplikasi. Trade-off inilah inti pembelajaran laporan ini.
+Konsekuensinya: kita **kehilangan jaminan relasional bawaan** (foreign key constraint, JOIN native, `whereDate`, dan **transaksi multi-dokumen atomik**), yang harus digantikan di lapisan aplikasi. Trade-off inilah inti pembelajaran laporan ini.
+
+> Klaim "skalabilitas horizontal" dan "hilangnya JOIN" **tidak dibiarkan sebagai retorika** — keduanya diukur secara kuantitatif (jumlah round-trip query eager loading vs JOIN tunggal) di bagian [8/P6](#p6--query-operator--optimization), dan konsekuensi hilangnya transaksi dibahas di bagian [8/P7](#transaksi-multi-dokumen--risiko-partial-write-gap-yang-teridentifikasi).
 
 ---
 
@@ -416,6 +418,37 @@ Satu dokumen `daily_check_ins` seperti tersimpan di MongoDB:
 
 Perhatikan `user_id` bertipe **String** (bukan ObjectId) — inilah yang harus konsisten agar relasi `hasMany` resolve (masalah #2). `check_in_date` bertipe **ISODate** hasil `$casts` `date` + `UTCDateTime` di seeder (masalah #3).
 
+### 5.5 Analisis Trade-off: Embed vs Reference
+
+Sistem ini memilih **referenced** (18 collection terpisah, dihubungkan `*_id`) untuk seluruh relasi — meniru desain relasional awal. Keputusan ini **tidak selalu optimal** di MongoDB. Berikut analisis kapan seharusnya *embed* vs *reference* pada skema nyata sistem ini, memakai tiga kriteria: (a) pola akses, (b) rasio baca/tulis, (c) batas pertumbuhan (unbounded growth).
+
+| Relasi (aktual) | Keputusan sekarang | Rekomendasi | Alasan |
+|-----------------|--------------------|-------------|--------|
+| `payments` → `payment_histories` | Reference | **Embed** (array dalam dokumen payment) | Log write-once, **selalu dibaca bersama** payment-nya, jumlah terbatas (beberapa entri per payment). Embed = 1 read, hilangkan join |
+| `appointments` → `consultations` | Reference (1:1) | **Embed** | Relasi 1:1, consultations tak pernah di-query independen dari appointment-nya. Embed menyatukan siklus hidup |
+| `payments` → `refund_policies` | Reference (1:1) | **Embed** | 1:1, hanya relevan saat refund payment terkait |
+| `users` → `professionals` | Reference (1:1) | **Tetap Reference** | `professionals` di-query independen (daftar konsultan publik, filter `is_verified`) tanpa butuh dokumen user |
+| `forums` → `forum_replies` | Reference (1:N) | **Tetap Reference** | Balasan bisa **tumbuh tak terbatas** (unbounded) → embed melanggar batas dokumen BSON 16 MB; reply juga dipaginasi terpisah |
+| `users` → `daily_check_ins` | Reference (1:N) | **Tetap Reference** | Unbounded (1 dokumen/hari selamanya); di-query dengan range tanggal |
+| `books` → `orders` | Reference (N:1) | **Tetap Reference** | Banyak-ke-satu; buku entitas mandiri dgn stok yang di-update |
+
+**Contoh embed yang seharusnya diterapkan** — `payment_histories` ke dalam `payments`:
+
+```json
+{
+  "_id": ObjectId("..."),
+  "user_id": "66a1...b02",
+  "amount": 150000,
+  "status": "success",
+  "histories": [
+    { "status": "pending", "amount": 150000, "at": ISODate("2026-07-05T08:00:00Z") },
+    { "status": "success", "amount": 150000, "at": ISODate("2026-07-05T08:05:11Z") }
+  ]
+}
+```
+
+**Kesimpulan trade-off:** desain sistem saat ini adalah *"MySQL yang dipindah ke MongoDB"* — aman dan konsisten, tetapi belum memanfaatkan kekuatan model dokumen. Aturan praktisnya: **embed** data 1:1 / 1:few yang selalu dibaca bersama induknya dan berukuran terbatas; **reference** data yang di-query independen atau tumbuh tak terbatas. `payment_histories`, `consultations`, dan `refund_policies` adalah kandidat embed paling jelas.
+
 ---
 
 ## 6. Langkah Migrasi — Step by Step
@@ -521,7 +554,8 @@ protected $casts = [
 
 ```bash
 ./serve.sh artisan migrate
-# → 26 migrasi DONE, 22 collection terbentuk
+# → 26 migrasi DONE, 21 collection terbentuk (18 domain + 3 bawaan Laravel:
+#   password_resets, failed_jobs, personal_access_tokens)
 ```
 
 ### Langkah 7 — Menyesuaikan Seeder
@@ -581,7 +615,7 @@ Agar seluruh perintah selalu memakai `php@8.2`:
 | **B1** | `ConsultationController@book` — `exists:schedules,id` | Laravel cari kolom literal `id`, MongoDB pakai `_id` | Ubah ke `exists:schedules,_id`. ✅ Appointment + payment terbuat |
 | **B2** | `ContentApproval` — `MassAssignmentException` | Model tanpa `$fillable` | Tambah `$fillable` + `$casts` + relasi. ✅ Approve/reject jalan |
 | **B3** | `whereDate/whereMonth/whereYear` di banyak controller | Driver 3.9 tak dukung → query selalu kosong | Ganti *range query* `whereBetween(startOfDay, endOfDay)` + scope `DailyCheckIn::scopeOnDate()`. ✅ Streak +1 benar, check-in kedua diblokir, revenue bulanan benar |
-| **B4** | `ProgressController@store` — "Uang Dihemat" selalu Rp0 | Field `price_per_pack`/`cigarettes_per_pack` divalidasi tapi tak disimpan; `money_saved` hard-code 0 | Simpan kedua field + helper `calculateMoneySaved()`. ✅ 12 rokok/hari @ Rp30.000/20 batang → Rp18.000 |
+| **B4** | `CheckInController@store` — "Uang Dihemat" selalu Rp0 | `ProgressController@store` sudah menyimpan `price_per_pack`/`cigarettes_per_pack`, tapi `money_saved` tak pernah dihitung ulang saat check-in harian | Tambah helper `ProgressTracker::calculateMoneySaved()`, dipanggil di `CheckInController@store` tiap check-in. ✅ 12 rokok/hari @ Rp30.000/20 batang → Rp18.000 |
 | **B5** | Error validasi tak tampil di UI | Layout hanya tampilkan flash `success`/`error` | Tambah blok daftar `$errors` global di `layouts/app.blade.php` |
 
 > **B3 adalah temuan terpenting.** `whereDate` yang diam-diam mengembalikan kosong membuat deteksi "sudah check-in hari ini" gagal → streak bisa dobel-hitung (fitur inti tracker), dan seluruh statistik bulanan dashboard jadi 0. Ini pelajaran bahwa **migrasi database bukan penggantian transparan** — operator yang di MySQL bekerja bisa gagal-diam di MongoDB.
@@ -638,6 +672,39 @@ Payment::where('status', 'success')->sum('amount');  // SUM()
 
 Di balik layar Jenssegers menerjemahkannya ke **aggregation pipeline** MongoDB (`$match` + `$group`), bukan SQL `GROUP BY`.
 
+#### Pembuktian Normalisasi via Functional Dependency (skema MySQL awal)
+
+Klaim 3NF tidak cukup dinyatakan — harus dibuktikan lewat **dependensi fungsional (FD)**. Berikut analisis FD pada tabel-tabel kunci di skema relasional awal (sebelum migrasi), memakai notasi `X → Y` ("X menentukan Y").
+
+**Tabel `payments`** — PK: `id`
+```
+id → {appointment_id, user_id, amount, status, refund_percentage, refund_amount, paid_at}
+```
+- **1NF:** semua atribut atomik (tak ada array/grup berulang). ✅
+- **2NF:** PK tunggal (`id`), jadi tak mungkin ada dependensi parsial. ✅
+- **3NF:** tak ada FD transitif `id → A → B`. Nilai `refund_amount` dihitung & disimpan per-transaksi, **bukan** diturunkan dari atribut non-kunci lain di tabel yang sama. ✅
+
+**Tabel `orders`** — PK: `id`
+```
+id → {user_id, book_id, quantity, unit_price, total_price, status}
+book_id → {title, author, price}   ← FD ini TIDAK berada di orders
+```
+- Potensi pelanggaran **3NF**: jika `title`/`author`/`price` ikut disimpan di `orders`, muncul transitif `id → book_id → title`. **Dihindari** dengan memisah ke tabel `books`; `orders` hanya menyimpan `book_id`. ✅
+- Catatan: `unit_price` **sengaja disalin** ke `orders` sebagai *snapshot harga saat transaksi* (bukan pelanggaran 3NF — nilainya independen dari `books.price` yang bisa berubah kemudian). Ini keputusan desain sadar, bukan redundansi.
+
+**Tabel `professionals`** — PK: `id`
+```
+id → {user_id, type, specialization, license_number, is_verified, hourly_rate}
+user_id → {name, email}   ← FD milik tabel users, DIPISAH
+```
+- Data identitas (`name`, `email`) tidak diduplikasi di `professionals` → menghindari transitif `id → user_id → name`. ✅ (3NF)
+
+**Ringkasan closure kunci:** untuk setiap tabel, `{PK}⁺` (attribute closure) mencakup seluruh atribut tabel, dan **tak ada** determinan non-superkey → memenuhi **3NF**, bahkan **BCNF** (setiap determinan = kunci kandidat). Setelah migrasi ke MongoDB, struktur *referenced* yang sama dipertahankan sehingga sifat normalisasi ini tetap berlaku secara logis — lihat analisis trade-off embed/reference di bagian [5.5](#55-analisis-trade-off-embed-vs-reference).
+
+> **Temuan kritis — redundansi intra-collection yang belum ditangani:** klaim 3NF di atas berlaku untuk **relasi antar-collection**, tapi tidak untuk **field di dalam satu collection yang sama**. Cek `app/Models/Forum.php` dan `ForumReply.php` menunjukkan field `body` dan `content` di-`$fillable` berdampingan (nilai sama disimpan dua kali), begitu pula `views` dan `views_count` di `forums`. Ini bentuk **redundansi murni** (bukan snapshot harga seperti kasus `orders.unit_price` yang dibenarkan di atas) — melanggar semangat 3NF karena satu fakta disimpan di dua tempat, rawan *update anomaly* (satu field ter-update, satunya tidak). **Rekomendasi:** hapus salah satu alias (`content`/`views`) dan seragamkan pemakaian ke satu field di seluruh view/controller.
+
+
+
 ### P4 — Multiple Relation & "JOIN"
 
 Relasi 1:1, 1:N tetap dideklarasikan via Eloquent (`hasOne`, `hasMany`, `belongsTo`). Eager loading `with()` menghasilkan query terpisah + penggabungan di aplikasi (mirip `$lookup`), bukan JOIN engine.
@@ -665,6 +732,46 @@ $table->index('check_in_date', 'idx_daily_check_ins_date');  // penting utk stre
 
 Tanpa index, query filter = **collection scan O(n)**; dengan index = **index scan O(log n)**. Pagination `paginate(20)` mencegah memuat seluruh collection.
 
+#### Kelemahan strategi index saat ini: hanya single-field
+
+Migration `add_performance_indexes` hanya membuat **index satu-kolom**. Query terpenting sistem justru **multi-kondisi**, sehingga index tunggal tidak optimal.
+
+**Query streak (paling sering dipanggil)** — cek check-in user pada satu hari:
+```php
+DailyCheckIn::where('user_id', $user->id)->onDate(today())  // user_id (equality) + check_in_date (range)
+```
+Index sekarang `{check_in_date}` saja → MongoDB memfilter **semua** dokumen di rentang tanggal itu (lintas semua user) lalu menyaring `user_id`. Yang benar adalah **compound index**:
+
+```php
+// user_id lebih dulu (equality), check_in_date sesudah (range) — aturan ESR
+$table->index(['user_id', 'check_in_date'], 'idx_checkin_user_date');
+```
+
+**Aturan ESR (Equality, Sort, Range)** untuk menyusun urutan field compound index:
+
+| Query | Compound index disarankan | Alasan |
+|-------|---------------------------|--------|
+| streak per-user harian | `{user_id, check_in_date}` | equality `user_id` dulu, lalu range tanggal |
+| revenue bulanan dashboard | `{status, paid_at}` | equality `status='success'`, lalu range `paid_at` |
+| appointment user + status | `{user_id, status}` | dua equality; dashboard "janji temu saya" |
+| konten publik | `{approval_status, is_published}` | dua equality yang selalu dipakai bersama |
+
+Index single-field `{check_in_date}` menjadi **redundan** setelah `{user_id, check_in_date}` dibuat, karena compound index bisa melayani query yang hanya butuh prefix-nya (`user_id`).
+
+#### Benchmark kuantitatif: jumlah query eager loading
+
+Klaim performa harus terukur. Metrik paling deterministik (tak bergantung volume data) adalah **jumlah round-trip query** yang dibangkitkan. Untuk `Payment::with(['user', 'order.book', 'appointment.professional.user'])->paginate(20)`:
+
+| Pendekatan | Jumlah query DB | Keterangan |
+|------------|-----------------|------------|
+| **Tanpa eager loading (lazy / N+1)** | 1 + (20 × 4 relasi) ≈ **81 query** | tiap baris payment memicu query relasi terpisah |
+| **Eager loading `with()`** | 1 (payments) + 1 per relasi ≈ **6 query** | Jenssegers batch relasi via `$in` (mirip `$lookup`) |
+| **MySQL JOIN tunggal (pembanding)** | **1 query** | engine relasional gabung di server |
+
+**Temuan:** di MongoDB, `with()` **bukan** JOIN engine — ia menjalankan **1 query per level relasi** lalu menggabung di aplikasi. Untuk relasi 3 tingkat, MongoDB butuh ~6 round-trip vs 1 JOIN di MySQL. Ini **trade-off nyata** model dokumen: skalabilitas horizontal ditukar dengan hilangnya join server-side. Eager loading tetap wajib — mencegah ledakan N+1 dari 81 → 6 query.
+
+> **Cara reproduksi benchmark timing** (belum diukur di laporan ini, disediakan sebagai skrip verifikasi): aktifkan `DB::enableQueryLog()` sebelum query dan `count(DB::getQueryLog())` sesudahnya untuk menghitung jumlah query aktual; bungkus dengan `microtime(true)` untuk mengukur durasi. Timing absolut bergantung volume data seed, sehingga angka milidetik sengaja tidak diklaim tanpa pengukuran.
+
 ### P7 — Database Security
 
 | Mekanisme | Status di MongoDB |
@@ -678,6 +785,48 @@ Tanpa index, query filter = **collection scan O(n)**; dengan index = **index sca
 | **CSRF / Session** | Middleware Laravel + `session()->regenerate()` (tak berubah) |
 
 > **Pelajaran keamanan:** di MongoDB, **referential & domain integrity yang dulu dijamin engine kini menjadi tanggung jawab aplikasi**. Menghapus 1 baris validasi = kehilangan jaminan yang di MySQL otomatis.
+
+#### Transaksi Multi-Dokumen & Risiko Partial Write (gap yang teridentifikasi)
+
+Alur pembayaran menulis **dua dokumen berurutan** tanpa pembungkus transaksi:
+
+```php
+// app/Http/Controllers/ConsultationController.php — book()
+$appointment = Appointment::create([... 'status' => 'pending']);   // tulis dokumen 1
+$payment     = Payment::create(['appointment_id' => $appointment->id, ...]); // tulis dokumen 2
+```
+
+**Masalah:** bila `Payment::create()` gagal (server mati, koneksi putus) **setelah** `Appointment::create()` sukses, tersisa **appointment yatim** tanpa payment → *partial write*. Di MySQL ini dicegah dengan `DB::transaction()` (`COMMIT`/`ROLLBACK` atomik). Pencarian di kode: **tidak ada** `DB::transaction` di seluruh aplikasi.
+
+**Kendala teknis MongoDB pada sistem ini:** multi-document ACID transaction **membutuhkan replica set** (atau sharded cluster). Server proyek ini adalah **standalone `mongod`** (Homebrew) — sehingga `$session->startTransaction()` **tidak tersedia** sekalipun kode ingin memakainya. Jadi gap ini bersifat arsitektural, bukan sekadar lupa dibungkus.
+
+**Opsi mitigasi (rekomendasi):**
+
+| Opsi | Cara | Trade-off |
+|------|------|-----------|
+| **Replica set + transaction** | Jalankan mongod sebagai replica set (min. 1 node) → `DB::transaction()` jadi atomik lintas dokumen | Perlu ubah topologi deployment |
+| **Guard status `pending`** | Appointment berstatus `pending` tak dianggap valid sampai payment sukses; sweeper hapus appointment `pending` kedaluwarsa | Ada jendela data tak konsisten sementara |
+| **Pola Saga / kompensasi** | Jika langkah 2 gagal, jalankan aksi kompensasi (hapus appointment langkah 1) | Logika aplikasi lebih rumit |
+
+Untuk sistem yang menangani **uang**, opsi 1 (replica set + transaction) adalah yang paling benar dan direkomendasikan untuk produksi.
+
+#### NoSQL Injection (risiko spesifik MongoDB)
+
+"Query BSON parameterized aman dari SQL injection" **benar**, tetapi MongoDB punya vektor sendiri: **operator injection**. Bila input mentah dari request (yang bisa berupa array/objek) diteruskan langsung ke query, penyerang bisa menyuntik operator seperti `$ne`, `$gt`, atau `$where`:
+
+```php
+// BERBAHAYA (hipotetis) — jika input tidak divalidasi tipenya
+User::where('email', $request->input('email'))->first();
+// payload:  email[$ne]=null   →  cocok dengan user PERTAMA (bypass login)
+```
+
+**Status di sistem ini:** endpoint sensitif memakai `$request->validate()` dengan rule skalar (`'email' => ['required','email']`, `'schedule_id' => ['required','exists:...']`), yang **menolak input bertipe array** → vektor `$ne`/`$where` termitigasi untuk field-field tersebut. Rekomendasi penguatan: **cast eksplisit** semua input query ke string (`(string) $request->input(...)`) dan jangan pernah meneruskan `$request->all()` mentah ke `where()`.
+
+| Ancaman NoSQL | Contoh | Mitigasi di sistem |
+|---------------|--------|--------------------|
+| Operator injection `$ne`/`$gt` | `email[$ne]=null` (auth bypass) | Rule validasi skalar menolak array |
+| `$where` (eksekusi JS) | filter dgn JS arbitrer | Tak ada penggunaan `$where` di kode |
+| Type juggling | kirim objek alih-alih string | Cast eksplisit ke string (rekomendasi) |
 
 ---
 
@@ -716,11 +865,24 @@ Dijalankan `./serve.sh artisan migrate:fresh --seed` lalu diuji via HTTP otomati
 5. **Versi harus dikunci.** PHP 8.2 · Laravel 9 · package 3.9 · ext-mongodb 1.x — kombinasi salah = fatal.
 6. **Konsep P1–P7 tetap valid** — normalisasi, agregasi, relasi, index, dan security semuanya diterapkan, hanya mekanismenya menyesuaikan model dokumen.
 
+### Analisis Kritis & Rencana Perbaikan (Future Work)
+
+Selain yang sudah diimplementasikan, laporan ini secara jujur mengidentifikasi **gap desain** yang belum tuntas — bagian yang membedakan "kode jalan" dari "desain matang":
+
+| Gap | Kondisi sekarang | Rekomendasi |
+|-----|------------------|-------------|
+| **Transaksi pembayaran** | Tanpa `DB::transaction`; standalone mongod tak dukung multi-doc txn | Jalankan replica set → bungkus alur `appointment+payment` atomik (bagian 8/P7) |
+| **Desain dokumen** | Semua *referenced* (meniru relasional) | Embed `payment_histories`, `consultations`, `refund_policies` ke induknya (bagian 5.5) |
+| **Index** | Hanya single-field | Compound index `{user_id, check_in_date}` & `{status, paid_at}` via aturan ESR (bagian 8/P6) |
+| **NoSQL injection** | Termitigasi via rule validasi | Cast eksplisit input query ke string; larang `$request->all()` mentah ke `where()` (bagian 8/P7) |
+| **Benchmark timing** | Baru jumlah query (deterministik) | Ukur durasi via `DB::enableQueryLog()` + `microtime()` pada data volume produksi |
+| **Redundansi field** | `forums.body`≡`content`, `forums.views`≡`views_count` disimpan dobel | Hapus satu alias per pasangan, seragamkan pemakaian di controller/view (bagian [3](#3-alasan-migrasi-mengapa-dari-mysql-ke-mongodb) / [P3](#p3--normalisasi--fungsi-agregat)) |
+
 ---
 
 ## 11. Lampiran
 
-### 10.1 Cara Menjalankan
+### 11.1 Cara Menjalankan
 
 ```bash
 brew services start mongodb-community        # pastikan MongoDB jalan
@@ -730,7 +892,7 @@ brew services start mongodb-community        # pastikan MongoDB jalan
 
 > ⚠️ Jangan `php artisan serve` langsung — PHP default mesin 8.4 memicu error *"Expected integer or object, string given"*. Selalu pakai `./serve.sh`.
 
-### 10.2 Aturan Wajib untuk Pengembangan Lanjutan (MongoDB)
+### 11.2 Aturan Wajib untuk Pengembangan Lanjutan (MongoDB)
 
 - Jalankan **selalu** dengan `php@8.2` (`serve.sh`).
 - Model baru **wajib** extend `Jenssegers\Mongodb\Eloquent\Model`.
@@ -741,7 +903,7 @@ brew services start mongodb-community        # pastikan MongoDB jalan
 - Hindari `withCount` lintas-collection; pakai hitung via relasi. `whereHas`/`has` boleh.
 - Seeding via `DB::table()`: bungkus tanggal `UTCDateTime`, cast FK ke string — atau lebih aman pakai Eloquent `create()`.
 
-### 10.3 Stack & Versi (saling terkunci)
+### 11.3 Stack & Versi (saling terkunci)
 
 | Komponen | Versi |
 |----------|-------|
@@ -752,7 +914,7 @@ brew services start mongodb-community        # pastikan MongoDB jalan
 | Ekstensi | `ext-mongodb` 1.21.1 (wajib 1.x) |
 | Server | MongoDB Community (Homebrew, service `mongodb-community`) |
 
-### 10.4 Dokumen Terkait
+### 11.4 Dokumen Terkait
 
 - `MIGRASI_MONGODB.md` — catatan teknis rinci proses migrasi.
 - `laporan.md` — laporan versi MySQL (referensi pembanding sebelum migrasi).
@@ -761,3 +923,15 @@ brew services start mongodb-community        # pastikan MongoDB jalan
 ---
 
 *Laporan ini menunjukkan bahwa seluruh konsep basis data Pertemuan 1–7 telah diterapkan dan divalidasi ulang pada Platform Edukasi Berhenti Merokok setelah migrasi dari MySQL (relasional) ke MongoDB (dokumen/NoSQL) menggunakan Laravel 9 + driver Jenssegers.*
+
+---
+
+## Riwayat Revisi
+
+Versi final ini direvisi berdasarkan pengecekan silang setiap klaim teknis terhadap source code (model, controller, migration, config). Perbaikan yang dilakukan:
+
+1. Jumlah collection saat `migrate` dikoreksi 22 → **21** (18 domain + 3 tabel bawaan Laravel: `password_resets`, `failed_jobs`, `personal_access_tokens`).
+2. Lokasi fix bug B4 diluruskan: perhitungan `money_saved` terjadi di **`CheckInController@store`** lewat helper `ProgressTracker::calculateMoneySaved()`, bukan di `ProgressController@store` (controller itu hanya menyimpan `price_per_pack`/`cigarettes_per_pack` saat setup awal).
+3. Penomoran subbagian Lampiran diperbaiki `10.x` → **`11.x`**, mengikuti nomor section-nya.
+4. NIM Yoga Pratama dan tanggal laporan diperbaiki agar konsisten dengan anggota lain dan tanggal finalisasi.
+5. Ditambah temuan baru di §P3: field `body`/`content` dan `views`/`views_count` pada `forums` ternyata redundan di level kode (`$fillable`) — dicatat sebagai penyimpangan dari 3NF yang diklaim, bukan disembunyikan, lalu dimasukkan ke tabel *future work* bersama rekomendasi perbaikannya.
