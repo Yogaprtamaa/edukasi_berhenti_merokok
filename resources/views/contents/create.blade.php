@@ -14,7 +14,7 @@
         </div>
 
         <div class="card">
-            <form action="{{ route('contents.store') }}" method="POST" class="space-y-6">
+            <form action="{{ route('contents.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                 @csrf
                 <div>
                     <label class="editorial-label mb-2 block">Judul</label>
@@ -34,13 +34,28 @@
                     <textarea name="description" rows="2" class="input-field resize-none" placeholder="Ringkasan singkat konten (tampil di daftar)">{{ old('description') }}</textarea>
                 </div>
                 <div>
+                    <label class="editorial-label mb-2 block">Gambar / Infografis <span class="text-[#6C6863] normal-case tracking-normal">(opsional, maks 2 MB)</span></label>
+                    <input type="file" name="image" accept="image/jpeg,image/png,image/webp" class="input-field file:mr-4 file:border-0 file:bg-[#1A1A1A] file:px-4 file:py-2 file:text-xs file:uppercase file:tracking-wider file:text-[#EBE5DE]">
+                    @error('image')<p class="mt-1 text-xs text-red-700">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="editorial-label mb-2 block">Upload Video <span class="text-[#6C6863] normal-case tracking-normal">(opsional, MP4/WebM/MOV, maks 50 MB)</span></label>
+                    <input type="file" name="video" accept="video/mp4,video/webm,video/quicktime" class="input-field file:mr-4 file:border-0 file:bg-[#1A1A1A] file:px-4 file:py-2 file:text-xs file:uppercase file:tracking-wider file:text-[#EBE5DE]">
+                    @error('video')<p class="mt-1 text-xs text-red-700">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="editorial-label mb-2 block">…atau Link Video <span class="text-[#6C6863] normal-case tracking-normal">(opsional, YouTube)</span></label>
+                    <input type="url" name="video_url" value="{{ old('video_url') }}" class="input-field" placeholder="https://www.youtube.com/watch?v=...">
+                    @error('video_url')<p class="mt-1 text-xs text-red-700">{{ $message }}</p>@enderror
+                </div>
+                <div>
                     <label class="editorial-label mb-2 block">Isi Konten</label>
                     <textarea name="body" rows="12" required class="input-field resize-none" placeholder="Tulis isi kontenmu di sini...">{{ old('body') }}</textarea>
                     @error('body')<p class="mt-1 text-xs text-red-700">{{ $message }}</p>@enderror
                 </div>
                 <div class="flex gap-3">
                     <button type="submit" class="btn-primary"><span>Kirim untuk Review</span></button>
-                    <a href="{{ route('contents.index') }}" class="btn-secondary">Batal</a>
+                    <a href="{{ auth()->user()->role === 'admin' ? route('admin.contents') : route('contents.index') }}" class="btn-secondary">Batal</a>
                 </div>
             </form>
         </div>

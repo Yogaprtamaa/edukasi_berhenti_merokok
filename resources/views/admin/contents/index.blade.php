@@ -10,6 +10,7 @@
         </div>
         <h1 class="page-title">Moderasi <span class="italic text-[#D4AF37]">Konten</span></h1>
         <p class="mt-4 max-w-xl text-sm leading-relaxed text-[#6C6863]">Review dan publikasikan materi edukasi yang dikirim pengguna atau profesional.</p>
+        <a href="{{ route('contents.create') }}" class="btn-primary mt-6 inline-flex"><span>Tambah Konten</span></a>
     </header>
 
     <div class="card">

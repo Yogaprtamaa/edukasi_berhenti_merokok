@@ -32,6 +32,18 @@
                 </div>
             </div>
 
+            @if($content->is_video_upload)
+                <video src="{{ $content->video_url }}" controls preload="metadata" class="mt-6 w-full border border-[#1A1A1A]/10 bg-[#1A1A1A]"></video>
+            @elseif($content->video_embed_url)
+                <div class="mt-6 aspect-video w-full border border-[#1A1A1A]/10 bg-[#1A1A1A]">
+                    <iframe src="{{ $content->video_embed_url }}" class="h-full w-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen title="{{ $content->title }}"></iframe>
+                </div>
+            @endif
+
+            @if($content->thumbnail_url)
+                <img src="{{ $content->thumbnail_url }}" alt="{{ $content->title }}" class="mt-6 w-full border border-[#1A1A1A]/10">
+            @endif
+
             <div class="mt-6 text-[#1A1A1A] leading-relaxed">
                 {!! nl2br(e($content->body)) !!}
             </div>

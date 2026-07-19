@@ -38,6 +38,7 @@
                     ['label' => 'Jadwal', 'url' => route('professional.schedule'), 'active' => request()->routeIs('professional.schedule')],
                 ],
                 default => [
+                    ['label' => 'Dashboard', 'url' => route('dashboard'), 'active' => request()->routeIs('dashboard')],
                     ['label' => 'Progress', 'url' => route('user.progress'), 'active' => request()->routeIs('user.progress')],
                     ['label' => 'Edukasi', 'url' => route('contents.index'), 'active' => request()->routeIs('contents.*')],
                     ['label' => 'Buku', 'url' => route('books.index'), 'active' => request()->routeIs('books.index') || request()->routeIs('books.show')],

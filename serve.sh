@@ -16,6 +16,12 @@ set -e
 
 PHP82="/opt/homebrew/opt/php@8.2/bin/php"
 
+# Naikkan limit upload lewat .phpini/99-uploads.ini tanpa mengubah php.ini sistem.
+# Dipakai PHP_INI_SCAN_DIR (bukan flag -d) karena `artisan serve` mem-fork proses
+# `php -S` terpisah: flag -d tidak diwariskan, environment variable diwariskan.
+# Titik dua di depan = tetap muat direktori conf.d bawaan (ext-mongodb dll).
+export PHP_INI_SCAN_DIR=":$(cd "$(dirname "$0")" && pwd)/.phpini"
+
 if [ ! -x "$PHP82" ]; then
   echo "PHP 8.2 tidak ditemukan di $PHP82. Install dengan: brew install php@8.2" >&2
   exit 1

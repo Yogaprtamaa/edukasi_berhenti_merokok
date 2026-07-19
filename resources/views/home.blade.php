@@ -9,13 +9,13 @@
     $primaryAction = match ($role) {
         'admin' => ['label' => 'Buka Dashboard', 'url' => route('admin.dashboard')],
         'professional' => ['label' => 'Lihat Agenda', 'url' => route('professional.appointments')],
-        default => ['label' => 'Lihat Progress', 'url' => route('user.progress')],
+        default => ['label' => 'Buka Dashboard', 'url' => route('dashboard')],
     };
 
     $secondaryAction = match ($role) {
         'admin' => ['label' => 'Kelola Pembayaran', 'url' => route('admin.payments')],
         'professional' => ['label' => 'Kelola Jadwal', 'url' => route('professional.schedule')],
-        default => ['label' => 'Cari Konsultasi', 'url' => route('consultations.index')],
+        default => ['label' => 'Lihat Progress', 'url' => route('user.progress')],
     };
 
     $featureCards = match ($role) {

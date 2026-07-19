@@ -22,6 +22,14 @@ Route::get('/', fn() => redirect()->route('home'));
 // ── Home (semua role) ─────────────────────────────────────────────────────────
 Route::get('/home', [HomeController::class, 'index'])->name('home')->middleware('auth');
 
+// ── Submit konten (semua role) ────────────────────────────────────────────────
+// Admin & profesional juga boleh menulis konten; approval_status ditentukan
+// di ContentController berdasarkan role pengirim.
+Route::middleware('auth')->group(function () {
+    Route::get('/contents/create', [\App\Http\Controllers\ContentController::class, 'create'])->name('contents.create');
+    Route::post('/contents',       [\App\Http\Controllers\ContentController::class, 'store'])->name('contents.store');
+});
+
 // ── User routes ───────────────────────────────────────────────────────────────
 Route::middleware(['auth', 'role:user'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -31,8 +39,6 @@ Route::middleware(['auth', 'role:user'])->group(function () {
     Route::post('/progress', [\App\Http\Controllers\User\ProgressController::class, 'store']);
 
     Route::get('/contents',           [\App\Http\Controllers\ContentController::class, 'index'])->name('contents.index');
-    Route::get('/contents/create',    [\App\Http\Controllers\ContentController::class, 'create'])->name('contents.create');
-    Route::post('/contents',          [\App\Http\Controllers\ContentController::class, 'store'])->name('contents.store');
     Route::get('/contents/{content}', [\App\Http\Controllers\ContentController::class, 'show'])->name('contents.show');
 
     Route::get('/books',              [\App\Http\Controllers\BookController::class, 'index'])->name('books.index');
