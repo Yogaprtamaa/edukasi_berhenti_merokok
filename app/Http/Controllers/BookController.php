@@ -21,7 +21,7 @@ class BookController extends Controller
     {
         $orders = Order::with(['book', 'payment'])
             ->where('user_id', Auth::id())
-            ->whereHas('payment', fn($query) => $query->where('status', 'success'))
+            ->accessible()
             ->latest()
             ->paginate(12);
 
@@ -32,7 +32,7 @@ class BookController extends Controller
     {
         $hasPurchased = Order::where('user_id', Auth::id())
             ->where('book_id', $book->id)
-            ->whereHas('payment', fn($query) => $query->where('status', 'success'))
+            ->accessible()
             ->exists();
 
         return view('books.show', compact('book', 'hasPurchased'));
@@ -42,7 +42,7 @@ class BookController extends Controller
     {
         $hasPurchased = Order::where('user_id', Auth::id())
             ->where('book_id', $book->id)
-            ->whereHas('payment', fn($query) => $query->where('status', 'success'))
+            ->accessible()
             ->exists();
 
         abort_unless($hasPurchased, 403);

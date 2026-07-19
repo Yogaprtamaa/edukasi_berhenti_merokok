@@ -28,8 +28,9 @@
                     ['label' => 'Profesional', 'url' => route('admin.professionals'), 'active' => request()->routeIs('admin.professionals*')],
                     ['label' => 'Konten', 'url' => route('admin.contents'), 'active' => request()->routeIs('admin.contents*')],
                     ['label' => 'Forum', 'url' => route('admin.forums'), 'active' => request()->routeIs('admin.forums*')],
+                    ['label' => 'Buku', 'url' => route('admin.books'), 'active' => request()->routeIs('admin.books*')],
                     ['label' => 'Pembayaran', 'url' => route('admin.payments'), 'active' => request()->routeIs('admin.payments*')],
-                    ['label' => 'E-Book', 'url' => route('admin.orders'), 'active' => request()->routeIs('admin.orders*')],
+                    ['label' => 'Transaksi Buku', 'url' => route('admin.orders'), 'active' => request()->routeIs('admin.orders*')],
                     ['label' => 'Appointment', 'url' => route('admin.appointments'), 'active' => request()->routeIs('admin.appointments*')],
                 ],
                 'professional' => [

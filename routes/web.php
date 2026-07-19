@@ -101,6 +101,14 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('/forums/{forum}',                [\App\Http\Controllers\Admin\ForumController::class, 'destroy'])->name('forums.destroy');
     Route::delete('/forum-replies/{reply}',         [\App\Http\Controllers\Admin\ForumController::class, 'destroyReply'])->name('forum-replies.destroy');
 
+    // Books
+    Route::get('/books',                            [\App\Http\Controllers\Admin\BookController::class, 'index'])->name('books');
+    Route::get('/books/create',                     [\App\Http\Controllers\Admin\BookController::class, 'create'])->name('books.create');
+    Route::post('/books',                            [\App\Http\Controllers\Admin\BookController::class, 'store'])->name('books.store');
+    Route::get('/books/{book}/edit',                [\App\Http\Controllers\Admin\BookController::class, 'edit'])->name('books.edit');
+    Route::put('/books/{book}',                     [\App\Http\Controllers\Admin\BookController::class, 'update'])->name('books.update');
+    Route::delete('/books/{book}',                  [\App\Http\Controllers\Admin\BookController::class, 'destroy'])->name('books.destroy');
+
     // Transactions
     Route::get('/payments',                         [\App\Http\Controllers\Admin\PaymentController::class, 'index'])->name('payments');
     Route::get('/payments/{payment}',               [\App\Http\Controllers\Admin\PaymentController::class, 'show'])->name('payments.show');

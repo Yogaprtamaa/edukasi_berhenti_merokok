@@ -33,4 +33,16 @@ class Order extends Model
     {
         return $this->belongsTo(Payment::class);
     }
+
+    /**
+     * Order yang masih memberi akses ke buku: pembayaran sukses DAN order
+     * belum dibatalkan admin. Payment sukses saja tidak cukup — admin bisa
+     * membatalkan order tanpa mengubah status payment.
+     */
+    public function scopeAccessible($query)
+    {
+        return $query
+            ->where('status', '!=', 'cancelled')
+            ->whereHas('payment', fn($q) => $q->where('status', 'success'));
+    }
 }
